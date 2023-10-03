@@ -84,6 +84,24 @@ pub async fn sb_pannel(
         .await
         .unwrap();
 
+    let m4 = channel_id
+        .send_message(&ctx.http, |m| {
+            m.content("4").components(|c| {
+                c.create_action_row(|r| {
+                    r.add_button(quiz_button("bad_mood", "💔".parse().unwrap()));
+                    r.add_button(quiz_button("banques", "🏦".parse().unwrap()));
+                    r.add_button(quiz_button("mad", "😬".parse().unwrap()));
+                    r.add_button(quiz_button("smash", "❕".parse().unwrap()));
+                    r.add_button(quiz_button(
+                        "jew",
+                        "<:nazi:858800622789591100>".parse().unwrap(),
+                    ))
+                })
+            })
+        })
+        .await
+        .unwrap();
+
     let mut interaction_stream_1 = m1.await_component_interactions(&ctx).build();
     let mut interaction_stream_2 = m2.await_component_interactions(&ctx).build();
     let mut interaction_stream_3 = m3.await_component_interactions(&ctx).build();
