@@ -1,0 +1,25 @@
+[package]
+name = "nicro"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.66"
+shuttle-serenity = "0.27.0"
+shuttle-runtime = "0.27.0"
+serenity = { version = "0.11.5", default-features = false, features = [
+    "client",
+    "gateway",
+    "rustls_backend",
+    "model",
+    "standard_framework",
+    "voice",
+    "cache",
+    "collector",
+] }
+shuttle-secrets = "0.27.0"
+tokio = "1.26.0"
+tracing = "0.1.37"
+surf = "2.3.0"
+songbird = "0.3.2"
+futures = "0.3.28"
