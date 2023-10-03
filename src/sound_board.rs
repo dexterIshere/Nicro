@@ -92,10 +92,6 @@ pub async fn sb_pannel(
                     r.add_button(quiz_button("banques", "🏦".parse().unwrap()));
                     r.add_button(quiz_button("mad", "😬".parse().unwrap()));
                     r.add_button(quiz_button("smash", "❕".parse().unwrap()));
-                    r.add_button(quiz_button(
-                        "jew",
-                        "<:nazi:858800622789591100>".parse().unwrap(),
-                    ))
                 })
             })
         })
