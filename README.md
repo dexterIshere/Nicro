@@ -25,7 +25,7 @@ Nicro is a Discord bot with the capability to display a soundboard in a text cha
 
 ## 🕹️ Commands
 
-`~join` : Nicro enter the channel
-`~leave` : Nicro leave the channel
-`~sb` : Display the soundboard Panel
-`~playn` : Play a source from the web (YT, Souncloud, PH .....)
+- `~join` : Nicro enter the channel
+- `~leave` : Nicro leave the channel
+- `~sb` : Display the soundboard Panel
+- `~play` : Play a source from the web (YT, Soundcloud, PH .....)
