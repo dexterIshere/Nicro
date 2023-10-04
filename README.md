@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" src="https://raw.githubusercontent.com/dexterIshere/nicro/master/assets/nicro.png"/>
+  <img width="150" src="https://raw.githubusercontent.com/dexterIshere/nicro/master/assets/nicro.png"/>
 </p>
 
 <p align="center">
