@@ -1,3 +1,4 @@
+mod messages;
 mod sound_board;
 mod sources;
 use std::collections::HashMap;
@@ -6,6 +7,7 @@ use std::sync::Arc;
 use anyhow::anyhow;
 use serenity::client::Context;
 use serenity::framework::standard::Args;
+use serenity::model::prelude::{GuildId, MessageId};
 use serenity::prelude::TypeMapKey;
 use serenity::{
     async_trait,
@@ -71,6 +73,11 @@ impl TypeMapKey for SoundStore {
     type Value = Arc<Mutex<HashMap<String, CachedSound>>>;
 }
 
+struct SbMessages;
+impl TypeMapKey for SbMessages {
+    type Value = Arc<Mutex<HashMap<GuildId, Vec<MessageId>>>>;
+}
+
 #[group]
 #[commands(join, leave, play, sb)]
 struct General;
@@ -115,6 +122,11 @@ async fn serenity(
                 eprintln!("Failed to initialize sounds: {:?}", e);
             }
         }
+    }
+
+    {
+        let mut sb_data = client.data.write().await;
+        sb_data.insert::<SbMessages>(Arc::new(Mutex::new(HashMap::new())));
     }
 
     Ok(client.into())

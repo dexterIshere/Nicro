@@ -1,4 +1,5 @@
 /target
 Secrets*.toml
 /static
+/src/messages.rs
 cargo.lock

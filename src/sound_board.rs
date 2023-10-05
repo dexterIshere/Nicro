@@ -1,11 +1,9 @@
 use std::{collections::HashMap, sync::Arc};
 
+use futures::StreamExt;
 use serenity::{
-    builder::CreateButton,
-    futures::StreamExt,
     model::{
-        application::component::ButtonStyle,
-        prelude::{message_component::MessageComponentInteraction, ReactionType},
+        prelude::message_component::MessageComponentInteraction,
         prelude::{ChannelId, InteractionResponseType},
     },
     prelude::Context,
@@ -14,16 +12,10 @@ use serenity::{
 use songbird::Call;
 use tokio::sync::Mutex;
 
-use crate::CachedSound;
-
-fn quiz_button(name: &str, emoji: ReactionType) -> CreateButton {
-    let mut b = CreateButton::default();
-    b.custom_id(name);
-    b.emoji(emoji);
-    b.label(name);
-    b.style(ButtonStyle::Primary);
-    b
-}
+use crate::{
+    messages::{sb_m1, sb_m2, sb_m3, sb_m4},
+    CachedSound,
+};
 
 pub async fn sb_pannel(
     ctx: &Context,
@@ -31,72 +23,11 @@ pub async fn sb_pannel(
     handler: Arc<Mutex<Call>>,
     sources: Arc<Mutex<HashMap<String, CachedSound>>>,
 ) {
-    let content = "Voici la soundboard:";
+    let m1 = sb_m1(&ctx, *channel_id).await.unwrap();
+    let m2 = sb_m2(&ctx, *channel_id).await.unwrap();
+    let m3 = sb_m3(&ctx, *channel_id).await.unwrap();
 
-    let m1 = channel_id
-        .send_message(&ctx.http, |m| {
-            m.content(content)
-                .embed(|e| {
-                    e.title("Soundboard")
-                        .description("click pour utilser Nicro 🤖")
-                })
-                .components(|c| {
-                    c.create_action_row(|r| {
-                        r.add_button(quiz_button("goofy", "📯".parse().unwrap()));
-                        r.add_button(quiz_button(
-                            "benji",
-                            "<:chad:1158742686858219580>".parse().unwrap(),
-                        ));
-                        r.add_button(quiz_button("sthu", "🪖".parse().unwrap()));
-                        r.add_button(quiz_button("uwu", "🍙".parse().unwrap()));
-                        r.add_button(quiz_button("so_back", "😎".parse().unwrap()))
-                    })
-                })
-        })
-        .await
-        .unwrap();
-    let m2 = channel_id
-        .send_message(&ctx.http, |m| {
-            m.content("2").components(|c| {
-                c.create_action_row(|r| {
-                    r.add_button(quiz_button("mario", "🪙".parse().unwrap()));
-                    r.add_button(quiz_button("men_stfu", "💢".parse().unwrap()));
-                    r.add_button(quiz_button("mes_bb", "🤓".parse().unwrap()));
-                    r.add_button(quiz_button("lucas2", "🔞".parse().unwrap()));
-                    r.add_button(quiz_button("nicro", "🤖".parse().unwrap()))
-                })
-            })
-        })
-        .await
-        .unwrap();
-    let m3 = channel_id
-        .send_message(&ctx.http, |m| {
-            m.content("3").components(|c| {
-                c.create_action_row(|r| {
-                    r.add_button(quiz_button("verstappen", "🏎️".parse().unwrap()));
-                    r.add_button(quiz_button("whala_pardon", "🙏".parse().unwrap()));
-                    r.add_button(quiz_button("c_grave", "😡".parse().unwrap()));
-                    r.add_button(quiz_button("dehorsmp3", "🚪".parse().unwrap()));
-                    r.add_button(quiz_button("remicaliste", "🕋".parse().unwrap()))
-                })
-            })
-        })
-        .await
-        .unwrap();
-
-    let m4 = channel_id
-        .send_message(&ctx.http, |m| {
-            m.content("4").components(|c| {
-                c.create_action_row(|r| {
-                    r.add_button(quiz_button("bad_mood", "💔".parse().unwrap()));
-                    r.add_button(quiz_button("banques", "🏦".parse().unwrap()));
-                    r.add_button(quiz_button("mad", "😬".parse().unwrap()));
-                    r.add_button(quiz_button("smash", "❕".parse().unwrap()));
-                })
-            })
-        })
-        .await
-        .unwrap();
+    let m4 = sb_m4(&ctx, *channel_id).await.unwrap();
 
     let mut interaction_stream_1 = m1.await_component_interactions(&ctx).build();
     let mut interaction_stream_2 = m2.await_component_interactions(&ctx).build();
