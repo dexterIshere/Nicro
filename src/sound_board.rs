@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use futures::StreamExt;
+use futures::{stream::FuturesUnordered, StreamExt};
 use serenity::{
     model::{
         prelude::message_component::MessageComponentInteraction,
@@ -12,10 +12,7 @@ use serenity::{
 use songbird::Call;
 use tokio::sync::Mutex;
 
-use crate::{
-    messages::{sb_m1, sb_m2, sb_m3, sb_m4},
-    CachedSound,
-};
+use crate::{messages::sound_board_generator, CachedSound};
 
 pub async fn sb_pannel(
     ctx: &Context,
@@ -23,43 +20,7 @@ pub async fn sb_pannel(
     handler: Arc<Mutex<Call>>,
     sources: Arc<Mutex<HashMap<String, CachedSound>>>,
 ) {
-    let m1 = sb_m1(&ctx, *channel_id).await.unwrap();
-    let m2 = sb_m2(&ctx, *channel_id).await.unwrap();
-    let m3 = sb_m3(&ctx, *channel_id).await.unwrap();
-
-    let m4 = sb_m4(&ctx, *channel_id).await.unwrap();
-
-    let mut interaction_stream_1 = m1.await_component_interactions(&ctx).build();
-    let mut interaction_stream_2 = m2.await_component_interactions(&ctx).build();
-    let mut interaction_stream_3 = m3.await_component_interactions(&ctx).build();
-    let mut interaction_stream_4 = m4.await_component_interactions(&ctx).build();
-
-    let sb_ctx = Arc::new(ctx.clone());
-    let src_clone = sources.clone();
-    let hdlr_clone = handler.clone();
-
-    tokio::spawn(async move {
-        loop {
-            tokio::select! {
-                Some(interaction) = interaction_stream_1.next() => {
-                    handle_interaction(&sb_ctx, &src_clone, &hdlr_clone, interaction).await;
-                },
-                Some(interaction) = interaction_stream_2.next() => {
-                    handle_interaction(&sb_ctx, &src_clone, &hdlr_clone, interaction).await;
-                },
-                Some(interaction) = interaction_stream_3.next() => {
-                    handle_interaction(&sb_ctx, &src_clone,  &hdlr_clone, interaction).await;
-                },
-                Some(interaction) = interaction_stream_4.next() => {
-                    handle_interaction(&sb_ctx, &src_clone,  &hdlr_clone, interaction).await;
-                },
-                else => {
-                    println!("Fin des interactions");
-                    break;
-                }
-            }
-        }
-    });
+    sound_board_generator(&ctx, *channel_id, &sources).await;
 }
 
 async fn handle_interaction(
@@ -68,7 +29,8 @@ async fn handle_interaction(
     handler: &Arc<Mutex<Call>>,
     interaction: Arc<MessageComponentInteraction>,
 ) {
-    let sources = sources.lock().await;
+    let cloned_sources = sources.clone();
+    let sources = cloned_sources.lock().await;
 
     let sound = &interaction.data.custom_id;
     let source_id = sources

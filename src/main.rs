@@ -29,7 +29,7 @@ use songbird::input::cached::Memory;
 use songbird::input::Input;
 use songbird::SerenityInit;
 use sound_board::sb_pannel;
-use sources::init_sources;
+use sources::{init_sb_sources, init_sources};
 use tokio::sync::Mutex;
 use tracing::{error, info};
 struct Bot;
@@ -67,9 +67,15 @@ impl From<&CachedSound> for Input {
     }
 }
 
-struct SoundStore;
+struct SoundBoardStore;
 
-impl TypeMapKey for SoundStore {
+impl TypeMapKey for SoundBoardStore {
+    type Value = Arc<Mutex<HashMap<String, CachedSound>>>;
+}
+
+struct SignedSoundsStore;
+
+impl TypeMapKey for SignedSoundsStore {
     type Value = Arc<Mutex<HashMap<String, CachedSound>>>;
 }
 
@@ -115,8 +121,24 @@ async fn serenity(
 
         match audio_map_result {
             Ok(audio_map) => {
-                let audio_map_arc_mutex = Arc::new(Mutex::new(audio_map));
-                data.insert::<SoundStore>(audio_map_arc_mutex);
+                let audio_map_mutex = Arc::new(Mutex::new(audio_map));
+                data.insert::<SoundBoardStore>(audio_map_mutex);
+            }
+            Err(e) => {
+                eprintln!("Failed to initialize sounds: {:?}", e);
+            }
+        }
+    }
+
+    {
+        let mut data = client.data.write().await;
+
+        let sb_sounds_result = init_sb_sources().await;
+
+        match sb_sounds_result {
+            Ok(audio_map) => {
+                let sb_sounds_mutex = Arc::new(Mutex::new(audio_map));
+                data.insert::<SignedSoundsStore>(sb_sounds_mutex);
             }
             Err(e) => {
                 eprintln!("Failed to initialize sounds: {:?}", e);
@@ -268,7 +290,7 @@ async fn sb(ctx: &Context, msg: &Message) -> CommandResult {
 
             let data_read = sb_ctx.data.read().await;
             let sources = data_read
-                .get::<SoundStore>()
+                .get::<SoundBoardStore>()
                 .cloned()
                 .expect("Sound cache was installed at startup.");
 
