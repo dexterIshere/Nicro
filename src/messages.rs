@@ -7,7 +7,7 @@ use serenity::{
 };
 use tokio::sync::Mutex;
 
-use crate::{CachedSound, SbMessages};
+use crate::{CachedSound, InteractionStreams, SbMessages};
 
 pub fn _join_msg() {}
 
@@ -32,16 +32,27 @@ pub async fn sound_board_generator(
     let mut btn_counter = 0;
     let mut action_row = CreateActionRow::default();
 
+    //ids
     let data_read = ctx.data.read().await;
-    let sb_msg_ids = match data_read.get::<SbMessages>() {
+    let sb_msgs_ids = match data_read.get::<SbMessages>() {
         Some(value) => value,
         None => {
             println!("SbMessages non trouvé dans TypeMap.");
             return Ok(());
         }
     };
+    let mut sb_msg_ids = sb_msgs_ids.lock().await;
 
-    let mut sb_msg_ids = sb_msg_ids.lock().await;
+    //interactions streams
+    let int_data = ctx.data.read().await;
+    let interactions_stream = match int_data.get::<InteractionStreams>() {
+        Some(value) => value,
+        None => {
+            println!("SbMessages non trouvé dans TypeMap.");
+            return Ok(());
+        }
+    };
+    let mut interactions = interactions_stream.lock().await;
 
     for file_name_str in sources.keys() {
         let sb_btn = sb_btn(&file_name_str);
@@ -55,7 +66,9 @@ pub async fn sound_board_generator(
                 })
                 .await?;
             sb_msg_ids.insert(m.id);
-            println!("{:?} inserted", sb_msg_ids.get(&m.id));
+
+            let reaction_stream = m.await_component_interactions(&ctx).build();
+            interactions.push(reaction_stream);
 
             btn_counter = 0;
             action_row = CreateActionRow::default();
@@ -69,6 +82,8 @@ pub async fn sound_board_generator(
             })
             .await?;
         sb_msg_ids.insert(m.id);
+        let reaction_stream = m.await_component_interactions(&ctx).build();
+        interactions.push(reaction_stream);
     }
 
     Ok(())

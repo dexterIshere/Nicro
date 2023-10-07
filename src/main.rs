@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use anyhow::anyhow;
 use serenity::client::Context;
+use serenity::collector::ComponentInteractionCollector;
 use serenity::framework::standard::Args;
 use serenity::model::prelude::MessageId;
 use serenity::prelude::TypeMapKey;
@@ -83,6 +84,11 @@ impl TypeMapKey for SbMessages {
     type Value = Arc<Mutex<HashSet<MessageId>>>;
 }
 
+pub struct InteractionStreams;
+impl TypeMapKey for InteractionStreams {
+    type Value = Arc<Mutex<Vec<ComponentInteractionCollector>>>;
+}
+
 #[group]
 #[commands(join, leave, play, sb)]
 struct General;
@@ -149,6 +155,12 @@ async fn serenity(
     {
         let mut data = client.data.write().await;
         data.insert::<SbMessages>(sb_msg_ids);
+    }
+
+    let interactions = Arc::new(Mutex::new(Vec::new()));
+    {
+        let mut data = client.data.write().await;
+        data.insert::<InteractionStreams>(interactions);
     }
 
     Ok(client.into())
