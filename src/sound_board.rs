@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use futures::{stream::FuturesUnordered, StreamExt};
 use serenity::{
     model::{
         prelude::message_component::MessageComponentInteraction,
@@ -17,13 +16,13 @@ use crate::{messages::sound_board_generator, CachedSound};
 pub async fn sb_pannel(
     ctx: &Context,
     channel_id: &ChannelId,
-    handler: Arc<Mutex<Call>>,
+    _handler: Arc<Mutex<Call>>,
     sources: Arc<Mutex<HashMap<String, CachedSound>>>,
 ) {
-    sound_board_generator(&ctx, *channel_id, &sources).await;
+    let _ = sound_board_generator(&ctx, *channel_id, &sources).await;
 }
 
-async fn handle_interaction(
+async fn _handle_interaction(
     ctx: &Arc<Context>,
     sources: &Arc<Mutex<HashMap<String, CachedSound>>>,
     handler: &Arc<Mutex<Call>>,

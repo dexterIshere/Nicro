@@ -1,13 +1,13 @@
 mod messages;
 mod sound_board;
 mod sources;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use anyhow::anyhow;
 use serenity::client::Context;
 use serenity::framework::standard::Args;
-use serenity::model::prelude::{GuildId, MessageId};
+use serenity::model::prelude::MessageId;
 use serenity::prelude::TypeMapKey;
 use serenity::{
     async_trait,
@@ -78,10 +78,9 @@ struct SignedSoundsStore;
 impl TypeMapKey for SignedSoundsStore {
     type Value = Arc<Mutex<HashMap<String, CachedSound>>>;
 }
-
-struct SbMessages;
+pub struct SbMessages;
 impl TypeMapKey for SbMessages {
-    type Value = Arc<Mutex<HashMap<GuildId, Vec<MessageId>>>>;
+    type Value = Arc<Mutex<HashSet<MessageId>>>;
 }
 
 #[group]
@@ -117,12 +116,12 @@ async fn serenity(
     {
         let mut data = client.data.write().await;
 
-        let audio_map_result = init_sources().await;
+        let sb_sounds_result = init_sources().await;
 
-        match audio_map_result {
+        match sb_sounds_result {
             Ok(audio_map) => {
-                let audio_map_mutex = Arc::new(Mutex::new(audio_map));
-                data.insert::<SoundBoardStore>(audio_map_mutex);
+                let sb_sounds_mutex = Arc::new(Mutex::new(audio_map));
+                data.insert::<SoundBoardStore>(sb_sounds_mutex);
             }
             Err(e) => {
                 eprintln!("Failed to initialize sounds: {:?}", e);
@@ -133,12 +132,12 @@ async fn serenity(
     {
         let mut data = client.data.write().await;
 
-        let sb_sounds_result = init_sb_sources().await;
+        let audio_map_result = init_sb_sources().await;
 
-        match sb_sounds_result {
+        match audio_map_result {
             Ok(audio_map) => {
-                let sb_sounds_mutex = Arc::new(Mutex::new(audio_map));
-                data.insert::<SignedSoundsStore>(sb_sounds_mutex);
+                let audio_map_mutex = Arc::new(Mutex::new(audio_map));
+                data.insert::<SignedSoundsStore>(audio_map_mutex);
             }
             Err(e) => {
                 eprintln!("Failed to initialize sounds: {:?}", e);
@@ -146,9 +145,10 @@ async fn serenity(
         }
     }
 
+    let sb_msg_ids = Arc::new(Mutex::new(HashSet::new()));
     {
-        let mut sb_data = client.data.write().await;
-        sb_data.insert::<SbMessages>(Arc::new(Mutex::new(HashMap::new())));
+        let mut data = client.data.write().await;
+        data.insert::<SbMessages>(sb_msg_ids);
     }
 
     Ok(client.into())
@@ -208,6 +208,19 @@ async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
                     .say(&ctx.http, format!("Failed: {:?}", e))
                     .await,
             );
+        }
+
+        let sb_ids_data = ctx.data.read().await;
+        if let Some(sb_msg_ids) = sb_ids_data.get::<SbMessages>() {
+            let mut sb_msg_ids = sb_msg_ids.lock().await;
+            for message_id in sb_msg_ids.iter() {
+                if let Err(e) = msg.channel_id.delete_message(&ctx.http, *message_id).await {
+                    println!("Failed to delete message: {:?}", e);
+                }
+            }
+            sb_msg_ids.clear();
+        } else {
+            println!("SbMessages non trouvé dans TypeMap.");
         }
 
         check_msg(msg.channel_id.say(&ctx.http, "Left voice channel").await);
