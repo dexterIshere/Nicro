@@ -188,7 +188,14 @@ async fn join(ctx: &Context, msg: &Message) -> CommandResult {
         .and_then(|voice_state| voice_state.channel_id);
 
     let connect_to = match channel_id {
-        Some(channel) => channel,
+        Some(channel) => {
+            if let Some(channel_data) = guild.channels.get(&channel) {
+                let vocal = channel_data.id().clone();
+                let m = messages::channel_joined(vocal);
+                let _ = msg.reply(ctx, &m).await;
+            }
+            channel
+        }
         None => {
             check_msg(msg.reply(ctx, "Not in a voice channel").await);
 
@@ -284,7 +291,6 @@ async fn play(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
             }
         };
         handler.play_source(source);
-        check_msg(msg.channel_id.say(&ctx.http, "Je joue ça").await); //return a sucess mess
     } else {
         check_msg(
             msg.channel_id

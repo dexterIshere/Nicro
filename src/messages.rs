@@ -2,8 +2,9 @@ use std::{collections::HashMap, sync::Arc};
 
 use serenity::{
     builder::{CreateActionRow, CreateButton},
-    model::{application::component::ButtonStyle, prelude::ChannelId},
+    model::{application::component::ButtonStyle, prelude::ChannelId, Timestamp},
     prelude::Context,
+    utils::MessageBuilder,
 };
 use tokio::sync::Mutex;
 
@@ -87,4 +88,26 @@ pub async fn sound_board_generator(
     }
 
     Ok(())
+}
+
+pub async fn embeded_player(ctx: &Context, channel_id: ChannelId) {
+    let _ = channel_id
+        .send_message(&ctx.http, |m| {
+            m.embed(|e| {
+                e.title("song name")
+                    .image("https:/")
+                    .title("new song")
+                    .timestamp(Timestamp::now())
+            })
+        })
+        .await;
+}
+
+pub fn channel_joined(voc_channel_id: ChannelId) -> String {
+    let msg = MessageBuilder::new()
+        .push_bold("Nicro joined ")
+        .mention(&voc_channel_id)
+        .build();
+
+    msg
 }
